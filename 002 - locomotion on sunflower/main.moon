@@ -24,59 +24,59 @@ motion = {
 }
 
 motion.smooth = (dt) ->
-  if lovr.headset.isTracked('right')
-    x, y = lovr.headset.getAxis('right', 'thumbstick')
+  if lovr.headset.isTracked 'right'
+    x, y = lovr.headset.getAxis 'right', 'thumbstick'
     -- Smooth horizontal turning
     if math.abs(x) > motion.thumbstickDeadzone
-      motion.pose\rotate(-x * motion.turningSpeed * dt, 0, 1, 0)
+      motion.pose\rotate -x * motion.turningSpeed * dt, 0, 1, 0
 
   if lovr.headset.isTracked('left')
-    x, y = lovr.headset.getAxis('left', 'thumbstick')
+    x, y = lovr.headset.getAxis 'left', 'thumbstick'
     direction = quat(lovr.headset.getOrientation(motion.directionFrom))\direction()
     if not motion.flying
       direction.y = 0
     -- Smooth strafe movement
     if math.abs(x) > motion.thumbstickDeadzone
-      strafeVector = quat(-math.pi / 2, 0,1,0)\mul(vec3(direction))
-      motion.pose\translate(strafeVector * x * motion.walkingSpeed * dt)
+      strafeVector = quat(-math.pi / 2, 0,1,0)\mul vec3 direction
+      motion.pose\translate strafeVector * x * motion.walkingSpeed * dt
 
     -- Smooth Forward/backward movement
     if math.abs(y) > motion.thumbstickDeadzone
-      motion.pose\translate(direction * y * motion.walkingSpeed * dt)
+      motion.pose\translate direction * y * motion.walkingSpeed * dt
 
 motion.snap = (dt) ->
   -- Snap horizontal turning
-  if lovr.headset.isTracked('right')
-    x, y = lovr.headset.getAxis('right', 'thumbstick')
+  if lovr.headset.isTracked 'right'
+    x, y = lovr.headset.getAxis 'right', 'thumbstick'
     if math.abs(x) > motion.thumbstickDeadzone and motion.thumbstickCooldown < 0
       angle = -x / math.abs(x) * motion.snapTurnAngle
-      motion.pose\rotate(angle, 0, 1, 0)
+      motion.pose\rotate angle, 0, 1, 0
       motion.thumbstickCooldown = motion.thumbstickCooldownTime
 
 
   -- Dashing forward/backward
   if lovr.headset.isTracked('left')
-    x, y = lovr.headset.getAxis('left', 'thumbstick')
+    x, y = lovr.headset.getAxis 'left', 'thumbstick'
     if math.abs(y) > motion.thumbstickDeadzone and motion.thumbstickCooldown < 0
       moveVector = quat(lovr.headset.getOrientation('head'))\direction()
       if not motion.flying
         moveVector.y = 0
-      moveVector\mul(y / math.abs(y) * motion.dashDistance)
-      motion.pose\translate(moveVector)
+      moveVector\mul y / math.abs(y) * motion.dashDistance
+      motion.pose\translate moveVector
       motion.thumbstickCooldown = motion.thumbstickCooldownTime
   motion.thumbstickCooldown = motion.thumbstickCooldown - dt
 
 lovr.update = (dt) ->
-  if lovr.headset.isDown('left', 'grip')
+  if lovr.headset.isDown 'left', 'grip'
     motion.flying = true
-  elseif lovr.headset.wasReleased('left', 'grip')
+  elseif lovr.headset.wasReleased 'left', 'grip'
     motion.flying = false
     height = vec3(motion.pose).y
-    motion.pose\translate(0, -height, 0)
-  if lovr.headset.isDown('right', 'grip')
-    motion.snap(dt)
+    motion.pose\translate 0, -height, 0
+  if lovr.headset.isDown 'right', 'grip'
+    motion.snap dt
   else
-    motion.smooth(dt)
+    motion.smooth dt
 
 -- sunflower, Vogel's model
 -- https://en.wikipedia.org/wiki/Fermat%27s_spiral
@@ -91,29 +91,29 @@ drawSunflowerFloor = ->
     theta = goldenAngle * n
     
     -- from polar to carthesian
-    x = math.cos(theta) * r
-    y = math.sin(theta) * r
+    x = r * math.cos theta
+    y = r * math.sin theta
 
     if lovr.math.random() < 0.05
-      lovr.graphics.setColor(0.5, 0, 0)
+      lovr.graphics.setColor 0.5, 0, 0
     else
       shade = 0.1 + 0.3 * lovr.math.random()
-      lovr.graphics.setColor(shade, shade, shade)
-    lovr.graphics.cylinder(x, 0, y,  0.05, math.pi / 2, 1,0,0, 1, 1)
+      lovr.graphics.setColor shade, shade, shade
+    lovr.graphics.cylinder x, 0, y,  0.05, math.pi / 2, 1,0,0, 1, 1
 
 drawHands = ->
-  lovr.graphics.setColor(1,1,1)
+  lovr.graphics.setColor 1,1,1
   radius = 0.05
-  for _, hand in ipairs(lovr.headset.getHands())
+  for _, hand in ipairs lovr.headset.getHands()
     -- Whenever pose of hand or head is used, need to account for VR movement
-    poseRW = mat4(lovr.headset.getPose(hand))
-    poseVR = mat4(motion.pose)\mul(poseRW)
-    poseVR\scale(radius)
-    lovr.graphics.sphere(poseVR)
+    poseRW = mat4 lovr.headset.getPose hand
+    poseVR = mat4(motion.pose)\mul poseRW
+    poseVR\scale radius
+    lovr.graphics.sphere poseVR
 
 lovr.draw = ->
-  lovr.graphics.setBackgroundColor(0.1, 0.1, 0.1)
-  lovr.graphics.transform(mat4(motion.pose)\invert())
+  lovr.graphics.setBackgroundColor 0.1, 0.1, 0.1
+  lovr.graphics.transform mat4(motion.pose)\invert()
 
   drawHands()
   drawSunflowerFloor()
